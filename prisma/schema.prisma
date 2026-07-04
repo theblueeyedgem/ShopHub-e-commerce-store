@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL") // pooled connection (Supabase: port 6543, pgbouncer)
+  directUrl = env("DIRECT_URL")   // direct connection (Supabase: port 5432) — used by migrate/db push
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String
+  role          Role      @default(CUSTOMER)
+  image         String?
+  emailVerified DateTime?
+
+  // Two-factor authentication (TOTP / Google Authenticator).
+  // twoFASecret holds the base32 secret; twoFAEnabled flips on only after the
+  // first 6-digit code is verified.
+  twoFASecret   String?
+  twoFAEnabled  Boolean   @default(false)
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  orders        Order[]
+  cart          Cart?
+
+  @@map("users")
+}
+
+enum Role {
+  CUSTOMER
+  ADMIN
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  name         String
+  slug         String   @unique
+  description  String?  @db.Text
+  price        Decimal  @db.Decimal(10, 2)
+  comparePrice Decimal? @db.Decimal(10, 2)
+  images       String[]
+  category     String
+  stock        Int      @default(0)
+  sku          String?  @unique
+  isActive     Boolean  @default(true)
+  featured     Boolean  @default(false)
+  tags         String[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  orderItems   OrderItem[]
+  cartItems    CartItem[]
+
+  @@map("products")
+}
+
+model Cart {
+  id        String     @id @default(cuid())
+  userId    String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  productId String
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([cartId, productId])
+  @@map("cart_items")
+}
+
+model Order {
+  id              String       @id @default(cuid())
+  userId          String
+  orderNumber     String       @unique
+  status          OrderStatus  @default(PENDING)
+  total           Decimal      @db.Decimal(10, 2)
+  subtotal        Decimal      @db.Decimal(10, 2)
+  tax             Decimal      @default(0) @db.Decimal(10, 2)
+  shipping        Decimal      @default(0) @db.Decimal(10, 2)
+  // Customer contact + shipping details (captured at checkout).
+  customerName    String?
+  customerEmail   String?
+  customerPhone   String?
+  paymentMethod   String?
+  stripeSessionId String?
+  shippingAddress Json
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  user            User         @relation(fields: [userId], references: [id])
+  items           OrderItem[]
+
+  @@index([createdAt])
+  @@map("orders")
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  productId String
+  quantity  Int
+  price     Decimal @db.Decimal(10, 2)
+
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+
+  @@map("order_items")
+}
+
+// Security audit log — admin access, logins, password/email changes, 2FA resets.
+model SecurityEvent {
+  id        String   @id @default(cuid())
+  type      String
+  email     String?
+  ip        String?
+  userAgent String?
+  meta      Json?
+  createdAt DateTime @default(now())
+
+  @@index([type])
+  @@index([createdAt])
+  @@map("security_events")
+}
