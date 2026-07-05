@@ -110,7 +110,19 @@ export default async function HomePage() {
           {featuredProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <ProductCard
+                  key={product.id}
+                  product={{
+                    id: product.id,
+                    name: product.name,
+                    slug: product.slug,
+                    price: Number(product.price),
+                    comparePrice: product.comparePrice ? Number(product.comparePrice) : null,
+                    images: product.images,
+                    category: product.category,
+                    stock: product.stock,
+                  }}
+                />
               ))}
             </div>
           ) : (
