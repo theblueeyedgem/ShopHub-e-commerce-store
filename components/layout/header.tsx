@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useSession, signOut } from 'next-auth/react'
-import { ShoppingCart, User, LogOut, LayoutDashboard, Menu } from 'lucide-react'
+import { ShoppingCart, User, LogOut, LayoutDashboard, Menu, PackageSearch, UserCircle } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useCart } from '@/store/cart'
@@ -30,6 +30,9 @@ export function Header() {
             <Link href="/products?featured=true" className="hover:text-primary transition-colors">
               Deals
             </Link>
+            <Link href="/track" className="hover:text-primary transition-colors">
+              Track Order
+            </Link>
           </nav>
 
           <div className="flex items-center gap-2">
@@ -44,10 +47,16 @@ export function Header() {
 
             {session ? (
               <div className="flex items-center gap-2">
-                {isAdmin && (
+                {isAdmin ? (
                   <Link href="/admin">
                     <Button variant="ghost" size="sm">
                       <LayoutDashboard className="w-4 h-4 mr-1" /> Admin
+                    </Button>
+                  </Link>
+                ) : (
+                  <Link href="/account">
+                    <Button variant="ghost" size="sm">
+                      <UserCircle className="w-4 h-4 mr-1" /> Account
                     </Button>
                   </Link>
                 )}
@@ -86,7 +95,12 @@ export function Header() {
           <div className="md:hidden py-3 border-t flex flex-col gap-2">
             <Link href="/products" onClick={() => setOpen(false)}>Products</Link>
             <Link href="/products?featured=true" onClick={() => setOpen(false)}>Deals</Link>
-            {!session && (
+            <Link href="/track" onClick={() => setOpen(false)}>Track Order</Link>
+            {session ? (
+              <Link href={isAdmin ? '/admin' : '/account'} onClick={() => setOpen(false)}>
+                {isAdmin ? 'Admin' : 'My Account'}
+              </Link>
+            ) : (
               <>
                 <Link href="/login" onClick={() => setOpen(false)}>Login</Link>
                 <Link href="/register" onClick={() => setOpen(false)}>Sign Up</Link>

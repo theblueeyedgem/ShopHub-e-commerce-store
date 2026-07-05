@@ -87,7 +87,20 @@ export default async function AdminOrdersPage() {
                   />
                 </div>
 
-                <div className="mt-4 flex justify-end border-t pt-4">
+                <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-t pt-4">
+                  {o.paymentScreenshot ? (
+                    <a href={o.paymentScreenshot} target="_blank" rel="noreferrer" className="group flex items-center gap-3">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={o.paymentScreenshot}
+                        alt="Payment proof"
+                        className="h-16 w-16 rounded-lg border object-cover transition group-hover:ring-2 group-hover:ring-primary"
+                      />
+                      <span className="text-xs text-primary group-hover:underline">View payment screenshot</span>
+                    </a>
+                  ) : (
+                    <span className="text-xs text-gray-400">No screenshot uploaded</span>
+                  )}
                   <OrderActions id={o.id} status={o.status} />
                 </div>
               </div>

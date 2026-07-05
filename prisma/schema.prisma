@@ -100,6 +100,9 @@ model Order {
   customerEmail   String?
   customerPhone   String?
   paymentMethod   String?
+  // Payment proof uploaded by the customer at checkout (base64 data URL).
+  paymentScreenshot     String? @db.Text
+  paymentScreenshotType String?
   stripeSessionId String?
   shippingAddress Json
   createdAt       DateTime     @default(now())

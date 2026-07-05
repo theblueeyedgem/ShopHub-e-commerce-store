@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { getCurrentUser } from '@/lib/auth'
 import { alertNewOrder } from '@/lib/security'
+import { sendOrderConfirmation } from '@/lib/email'
 import { generateOrderNumber } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
@@ -18,6 +19,15 @@ export async function POST(req: Request) {
   const c = body.customer || {}
   if (!c.fullName || !c.email) {
     return NextResponse.json({ error: 'Name and email are required.' }, { status: 400 })
+  }
+
+  // Payment screenshot is MANDATORY.
+  const screenshot: string = String(body.paymentScreenshot || '')
+  if (!screenshot.startsWith('data:image/')) {
+    return NextResponse.json(
+      { error: 'A payment screenshot is required to place the order.' },
+      { status: 400 }
+    )
   }
 
   // Look up real products + prices server-side (never trust client prices).
@@ -71,6 +81,8 @@ export async function POST(req: Request) {
       customerEmail: String(c.email),
       customerPhone: c.phone ? String(c.phone) : null,
       paymentMethod: body.paymentMethod ? String(body.paymentMethod) : null,
+      paymentScreenshot: screenshot,
+      paymentScreenshotType: body.paymentScreenshotType ? String(body.paymentScreenshotType) : null,
       shippingAddress: {
         fullName: c.fullName,
         street: c.street,
@@ -90,12 +102,25 @@ export async function POST(req: Request) {
     },
   })
 
-  // Fire-and-forget owner alert (no-op if email isn't configured).
+  // Fire-and-forget notifications (no-op if email isn't configured):
+  //  - alert the store owner of a new order
+  //  - send the CUSTOMER an order confirmation
   void alertNewOrder({
     orderNumber: order.orderNumber,
     total,
     customerName: order.customerName,
     customerEmail: order.customerEmail,
+  })
+  void sendOrderConfirmation({
+    orderNumber: order.orderNumber,
+    customerName: order.customerName,
+    customerEmail: order.customerEmail,
+    total,
+    items: lineItems.map((li) => ({
+      name: li.product.name,
+      quantity: li.quantity,
+      price: li.price,
+    })),
   })
 
   return NextResponse.json({ ok: true, orderNumber: order.orderNumber })

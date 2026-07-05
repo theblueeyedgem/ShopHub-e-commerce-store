@@ -54,3 +54,46 @@ export async function sendEmail({ to, subject, html, text }: SendArgs) {
   console.warn(`[email] No provider configured — would have sent to ${to}: ${subject}`)
   return { ok: false, provider: 'none' as const }
 }
+
+// Sends an order confirmation to the CUSTOMER right after they place an order.
+// No-op (beyond logging) when no email provider is configured.
+export async function sendOrderConfirmation(order: {
+  orderNumber: string
+  customerName?: string | null
+  customerEmail?: string | null
+  total: number | string
+  items: { name: string; quantity: number; price: number }[]
+}) {
+  if (!order.customerEmail) return
+
+  const rows = order.items
+    .map(
+      (i) =>
+        `<tr><td style="padding:4px 8px">${i.name} × ${i.quantity}</td><td style="padding:4px 8px;text-align:right">$${(i.price * i.quantity).toFixed(2)}</td></tr>`
+    )
+    .join('')
+
+  const html = `
+    <div style="font-family:system-ui,sans-serif;max-width:520px">
+      <h2 style="color:#2563eb">Thank you for your order! 🎉</h2>
+      <p>Hi ${order.customerName || 'there'}, we've received your order and are verifying your payment.</p>
+      <p style="font-size:14px">Order number: <b>${order.orderNumber}</b><br/>
+      Status: <b>Pending payment verification</b></p>
+      <table style="border-collapse:collapse;font-size:14px;width:100%;margin-top:8px">
+        ${rows}
+        <tr><td style="padding:8px;border-top:1px solid #eee"><b>Total</b></td>
+            <td style="padding:8px;border-top:1px solid #eee;text-align:right"><b>$${Number(order.total).toFixed(2)}</b></td></tr>
+      </table>
+      <p style="font-size:13px;color:#666;margin-top:16px">
+        Track your order anytime with your order number at our website's <b>Track Order</b> page.
+      </p>
+      <p style="font-size:12px;color:#999">— ShopHub</p>
+    </div>`
+
+  await sendEmail({
+    to: order.customerEmail,
+    subject: `Your ShopHub order ${order.orderNumber} is confirmed`,
+    html,
+    text: `Thanks for your order ${order.orderNumber}! Total $${Number(order.total).toFixed(2)}. We're verifying your payment.`,
+  })
+}

@@ -15,10 +15,17 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode
 }) {
+  // The dedicated admin login page lives at /admin/login. Render it standalone
+  // (no sidebar / no auth gate) so visiting /admin shows the ADMIN login form.
+  const pathname = headers().get('x-pathname') || ''
+  if (pathname === '/admin/login') {
+    return <>{children}</>
+  }
+
   const session = await getServerSession(authOptions)
   const role = (session?.user as { role?: string } | undefined)?.role
   if (!session?.user || role !== 'ADMIN') {
-    redirect('/login?from=/admin')
+    redirect('/admin/login')
   }
 
   // Fire-and-forget security alert (won't block rendering).
