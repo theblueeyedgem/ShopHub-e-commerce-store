@@ -136,6 +136,17 @@ model OrderItem {
   @@map("order_items")
 }
 
+// Persistent site settings (brand, description, SEO tags, banners, socials).
+// A single row (id = "site") holds the editable config as JSON so it never
+// resets on refresh/redeploy. The admin edits it from Admin → Site Settings.
+model SiteSetting {
+  id        String   @id @default("site")
+  data      Json
+  updatedAt DateTime @updatedAt
+
+  @@map("site_settings")
+}
+
 // Security audit log — admin access, logins, password/email changes, 2FA resets.
 model SecurityEvent {
   id        String   @id @default(cuid())

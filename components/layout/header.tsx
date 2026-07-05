@@ -7,7 +7,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useCart } from '@/store/cart'
 
-export function Header() {
+export function Header({ brandName = 'ShopHub' }: { brandName?: string }) {
   const { data: session } = useSession()
   const items = useCart((s) => s.items)
   const itemCount = items.reduce((sum, i) => sum + i.quantity, 0)
@@ -20,7 +20,7 @@ export function Header() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <Link href="/" className="text-2xl font-bold text-primary">
-            ShopHub
+            {brandName}
           </Link>
 
           <nav className="hidden md:flex items-center gap-6">

@@ -2,11 +2,14 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ProductCard } from '@/components/products/product-card'
 import { prisma } from '@/lib/prisma'
+import { getSettings } from '@/lib/settings'
 import { ArrowRight, Star, Truck, Shield, Zap } from 'lucide-react'
 
-export const revalidate = 3600 // Revalidate every hour
+export const dynamic = 'force-dynamic' // reflect admin settings/products immediately
 
 export default async function HomePage() {
+  const settings = await getSettings()
+
   // Load featured products; tolerate an empty/unmigrated DB so the page renders.
   const featuredProducts = await prisma.product
     .findMany({
@@ -30,10 +33,10 @@ export default async function HomePage() {
         <div className="absolute inset-0 bg-black/20" />
         <div className="container relative mx-auto px-4 text-center">
           <h1 className="text-5xl md:text-7xl font-bold mb-6 animate-fade-in">
-            Welcome to ShopHub
+            {settings.heroTitle}
           </h1>
           <p className="text-xl md:text-2xl mb-8 opacity-90 max-w-2xl mx-auto">
-            Discover amazing products at unbeatable prices. Your satisfaction is our priority.
+            {settings.heroSubtitle}
           </p>
           <div className="flex gap-4 justify-center flex-wrap">
             <Link href="/products">

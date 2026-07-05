@@ -4,7 +4,7 @@ import { headers } from 'next/headers'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth-options'
 import { alertAdminAccess } from '@/lib/security'
-import { LayoutDashboard, ShoppingCart, ShieldCheck, Store, Package } from 'lucide-react'
+import { LayoutDashboard, ShoppingCart, ShieldCheck, Store, Package, Settings } from 'lucide-react'
 import { AdminLogoutButton } from '@/components/admin/admin-logout-button'
 
 // Server-side gate — real NextAuth session + role check. The middleware also
@@ -56,6 +56,9 @@ export default async function AdminLayout({
           </NavLink>
           <NavLink href="/admin/security" icon={<ShieldCheck className="h-4 w-4" />}>
             Security &amp; 2FA
+          </NavLink>
+          <NavLink href="/admin/settings" icon={<Settings className="h-4 w-4" />}>
+            Site Settings
           </NavLink>
           <NavLink href="/" icon={<Store className="h-4 w-4" />}>
             View Storefront
